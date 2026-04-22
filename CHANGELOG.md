@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.0] - 2026-04-22
+
+### Added
+
+- **`GetDataFromFile` `rowsToSkip` overloads** — new overloads on both the `string filePath` and `Stream` variants accept an `int rowsToSkip` parameter that discards a fixed number of leading rows before CSV parsing begins. Designed for files that carry metadata rows (report headers, source-system identifiers, etc.) before the column header row. The existing `skipEncodingHeader` overloads remain and are implemented as `rowsToSkip: skipEncodingHeader ? 1 : 0` delegates, so all existing call sites continue to compile and behave identically.
+
+---
+
 ## [2.1.0] - 2026-04-22
 
 ### Added

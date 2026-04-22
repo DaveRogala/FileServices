@@ -83,6 +83,22 @@ public interface IFileServices
     ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, bool skipEncodingHeader, string delimiter = ",");
 
     /// <summary>
+    /// Reads a CSV file into a list of <typeparamref name="T"/> records, skipping a fixed number of leading rows.
+    /// </summary>
+    /// <remarks>
+    /// Use this overload when the file contains metadata rows before the column header row.
+    /// <paramref name="rowsToSkip"/> counts only the rows to discard; the header row that follows is not counted.
+    /// Row-level parse errors are collected in <see cref="ObjectResult{T}.Errors"/> rather than thrown.
+    /// </remarks>
+    /// <typeparam name="T">Record type whose properties are matched to CSV headers by name.</typeparam>
+    /// <param name="filePath">Full path to the CSV file.</param>
+    /// <param name="encoding">Encoding used to read the file. BOM detection is also enabled.</param>
+    /// <param name="rowsToSkip">Number of leading rows to discard before parsing begins. Pass <c>0</c> to skip nothing.</param>
+    /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <returns>An <see cref="ObjectResult{T}"/> containing parsed records and any row-level errors.</returns>
+    ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",");
+
+    /// <summary>
     /// Reads a CSV file into a list of <typeparamref name="T"/> records using UTF-8 encoding and a comma delimiter.
     /// </summary>
     /// <typeparam name="T">Record type whose properties are matched to CSV headers by name.</typeparam>
@@ -107,6 +123,23 @@ public interface IFileServices
     /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
     /// <returns>An <see cref="ObjectResult{T}"/> containing parsed records and any row-level errors.</returns>
     ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, bool skipEncodingHeader, string delimiter = ",");
+
+    /// <summary>
+    /// Reads a CSV stream into a list of <typeparamref name="T"/> records, skipping a fixed number of leading rows.
+    /// </summary>
+    /// <remarks>
+    /// Use this overload when the stream contains metadata rows before the column header row.
+    /// <paramref name="rowsToSkip"/> counts only the rows to discard; the header row that follows is not counted.
+    /// Row-level parse errors are collected in <see cref="ObjectResult{T}.Errors"/> rather than thrown.
+    /// The stream is not disposed by this method.
+    /// </remarks>
+    /// <typeparam name="T">Record type whose properties are matched to CSV headers by name.</typeparam>
+    /// <param name="stream">Readable stream positioned at the start of the CSV content.</param>
+    /// <param name="encoding">Encoding used to decode the stream. BOM detection is also enabled.</param>
+    /// <param name="rowsToSkip">Number of leading rows to discard before parsing begins. Pass <c>0</c> to skip nothing.</param>
+    /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <returns>An <see cref="ObjectResult{T}"/> containing parsed records and any row-level errors.</returns>
+    ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",");
 
     /// <summary>
     /// Reads a CSV stream into a list of <typeparamref name="T"/> records using UTF-8 encoding and a comma delimiter.

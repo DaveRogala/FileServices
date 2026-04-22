@@ -4,7 +4,7 @@ namespace MagellanFileServices.Services;
 /// Default implementation of <see cref="IFileServices"/>.
 /// </summary>
 /// <remarks>
-/// All <c>Handle*</c> methods and the primary <see cref="GetDataFromFile{T}(string,Encoding,bool,string)"/>
+/// All <c>Handle*</c> methods and the primary <see cref="GetDataFromFile{T}(System.IO.Stream,System.Text.Encoding,int,string)"/>
 /// overload are <see langword="virtual"/> and can be overridden in a subclass to customise behaviour.
 /// </remarks>
 public class FileServices : IFileServices
@@ -25,11 +25,19 @@ public class FileServices : IFileServices
 
     /// <inheritdoc/>
     public virtual ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, bool skipEncodingHeader, string delimiter = ",")
+        => GetDataFromFile<T>(filePath, encoding, skipEncodingHeader ? 1 : 0, delimiter);
+
+    /// <inheritdoc/>
+    public ObjectResult<T> GetDataFromFile<T>(string filePath, string delimiter = ",")
+        => GetDataFromFile<T>(filePath, Encoding.UTF8, rowsToSkip: 0, delimiter);
+
+    /// <inheritdoc/>
+    public virtual ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",")
     {
         try
         {
             using Stream stream = File.OpenRead(filePath);
-            return GetDataFromFile<T>(stream, encoding, skipEncodingHeader, delimiter);
+            return GetDataFromFile<T>(stream, encoding, rowsToSkip, delimiter);
         }
         catch (Exception ex)
         {
@@ -39,13 +47,11 @@ public class FileServices : IFileServices
     }
 
     /// <inheritdoc/>
-    public ObjectResult<T> GetDataFromFile<T>(string filePath, string delimiter = ",")
-    {
-        return GetDataFromFile<T>(filePath, Encoding.UTF8, skipEncodingHeader: false, delimiter);
-    }
+    public ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, bool skipEncodingHeader, string delimiter = ",")
+        => GetDataFromFile<T>(stream, encoding, skipEncodingHeader ? 1 : 0, delimiter);
 
     /// <inheritdoc/>
-    public ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, bool skipEncodingHeader, string delimiter = ",")
+    public virtual ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",")
     {
         ObjectResult<T> result = new();
         try
@@ -62,10 +68,8 @@ public class FileServices : IFileServices
                 Delimiter = delimiter
             };
             using StreamReader reader = new(stream, encoding, detectEncodingFromByteOrderMarks: true);
-            if (skipEncodingHeader)
-            {
+            for (int i = 0; i < rowsToSkip; i++)
                 reader.ReadLine();
-            }
             using CsvReader csv = new(reader, config);
             result.ObjectResults = csv.GetRecords<T>().ToList();
             return result;
@@ -86,9 +90,7 @@ public class FileServices : IFileServices
 
     /// <inheritdoc/>
     public ObjectResult<T> GetDataFromFile<T>(Stream stream, string delimiter = ",")
-    {
-        return GetDataFromFile<T>(stream, Encoding.UTF8, skipEncodingHeader: false, delimiter);
-    }
+        => GetDataFromFile<T>(stream, Encoding.UTF8, rowsToSkip: 0, delimiter);
 
     /// <inheritdoc/>
     public virtual void HandleFileError(string basePath, string fileName, string exceptionMessage, string timeStamp, List<string>? errors = null)

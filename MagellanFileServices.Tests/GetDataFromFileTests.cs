@@ -123,6 +123,59 @@ public class GetDataFromFileTests
     }
 
     [Fact]
+    public void GetDataFromFile_RowsToSkip_SkipsSpecifiedRows()
+    {
+        using var stream = CsvStream("meta1\nmeta2\nmeta3\nId,Name,Amount\n1,Alice,10.5");
+
+        var result = _sut.GetDataFromFile<TestRecord>(stream, Encoding.UTF8, rowsToSkip: 3);
+
+        Assert.Empty(result.Errors);
+        Assert.Single(result.ObjectResults!);
+        Assert.Equal("Alice", result.ObjectResults![0].Name);
+    }
+
+    [Fact]
+    public void GetDataFromFile_RowsToSkip_Zero_SkipsNothing()
+    {
+        using var stream = CsvStream("Id,Name,Amount\n1,Alice,10.5");
+
+        var result = _sut.GetDataFromFile<TestRecord>(stream, Encoding.UTF8, rowsToSkip: 0);
+
+        Assert.Empty(result.Errors);
+        Assert.Single(result.ObjectResults!);
+    }
+
+    [Fact]
+    public void GetDataFromFile_RowsToSkip_One_BehavesLikeSkipEncodingHeader()
+    {
+        using var streamA = CsvStream("utf-8\nId,Name,Amount\n1,Alice,10.5");
+        using var streamB = CsvStream("utf-8\nId,Name,Amount\n1,Alice,10.5");
+
+        var resultSkipFlag = _sut.GetDataFromFile<TestRecord>(streamA, Encoding.UTF8, skipEncodingHeader: true);
+        var resultRowsToSkip = _sut.GetDataFromFile<TestRecord>(streamB, Encoding.UTF8, rowsToSkip: 1);
+
+        Assert.Equal(resultSkipFlag.ObjectResults?.Count, resultRowsToSkip.ObjectResults?.Count);
+        Assert.Equal(resultSkipFlag.ObjectResults![0].Name, resultRowsToSkip.ObjectResults![0].Name);
+    }
+
+    [Fact]
+    public void GetDataFromFile_RowsToSkip_FileOverload_SkipsRows()
+    {
+        string tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "report_header\nsource_system\nId,Name,Amount\n1,Alice,10.5", Encoding.UTF8);
+
+            var result = _sut.GetDataFromFile<TestRecord>(tempFile, Encoding.UTF8, rowsToSkip: 2);
+
+            Assert.Empty(result.Errors);
+            Assert.Single(result.ObjectResults!);
+            Assert.Equal("Alice", result.ObjectResults![0].Name);
+        }
+        finally { File.Delete(tempFile); }
+    }
+
+    [Fact]
     public void GetDataFromFile_FileNotFound_Throws()
     {
         Assert.Throws<FileNotFoundException>(() =>
