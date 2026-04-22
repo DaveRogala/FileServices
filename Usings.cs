@@ -2,6 +2,7 @@
 global using CsvHelper.Configuration;
 global using MagellanFileServices.Contracts;
 global using MagellanFileServices.Models;
+global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using System.Globalization;
 global using System.Text;
