@@ -1,0 +1,43 @@
+# Changelog
+
+All notable changes to MagellanFileServices are documented here.
+This project follows [Semantic Versioning](https://semver.org/).
+
+---
+
+## [2.0.0] - 2026-04-22
+
+### Breaking changes
+
+- **`HandlFileErrorAsync` renamed to `HandleFileErrorAsync`** — corrects a long-standing typo in the public interface.
+- **Async Handle methods now accept `BlobContainerClient`** instead of raw `blobConnectionString` + `containerName` parameters. Callers are responsible for constructing and managing the client, which enables DI, connection reuse, and unit testing without live Azure credentials.
+- **Removed unused `Stream stream` parameter** from `HandleFileErrorAsync` and `HandleFileSuccessAsync` — the parameter was never read by the implementation.
+- **`WriteDataToFile` overloads changed from `bool` to `void`** — the previous return type always returned `true` or threw; callers should use try/catch to detect failure.
+- **`GetDataFromFile` interface parameter renamed** from `connectionString` to `filePath` to match the implementation and prevent misuse.
+- **`firstLineContainsEncoding` renamed to `skipEncodingHeader`** on both `GetDataFromFile` overloads — the new name more clearly describes the effect.
+- **`FileWriteResult` class removed** — it was defined but never used.
+
+### Bug fixes
+
+- Azure blob archive paths were constructed with `Path.Combine`, which uses `\` on Windows. Paths are now built with `/` to match Azure Blob Storage requirements.
+- `HandleFileError` and `HandleFileSuccess` previously created the destination directory before validating `basePath` and `fileName`, allowing partially formed paths to be created. Argument guards now run first.
+- `HandleFileErrorAsync` and `HandleFileSuccessAsync` validated `containerName` twice and never validated `blobConnectionString`. The async Handle methods now validate the `BlobContainerClient` argument instead.
+- `TargetFileName` used `string.Replace` to insert the timestamp, which produced incorrect results for filenames containing multiple dots (e.g. `report.2024.csv` → `report_ts.2024.csv` instead of `report.2024_ts.csv`). Rewritten using `Path.GetFileNameWithoutExtension` and `Path.GetExtension`.
+- The file-path overload of `GetDataFromFile` opened a `StreamReader` and then passed its `BaseStream` to the stream overload, which wrapped it in a second `StreamReader`. The inner dispose closed the stream unexpectedly. The overload now opens the file with `File.OpenRead` and passes the stream directly.
+- Error log strings in `HandleFileError` and `HandleFileErrorAsync` used `\n\r` (non-standard) instead of `Environment.NewLine`.
+
+### Improvements
+
+- `Encoding.Default` (OS-dependent) replaced with `Encoding.UTF8` as the default for all read and write operations.
+- Per-row errors in `HandleFileError` and `HandleFileErrorAsync` now appended with `string.Join` instead of a loop with string concatenation.
+- `"errors"` and `"processed"` folder name literals extracted to `private const` fields.
+- `GetDataFromFile` stream overload now passes the `Encoding` parameter to the `StreamReader` constructor and enables BOM detection.
+- Removed unused `Microsoft.Extensions.Configuration` NuGet package reference.
+- `WriteDataToFile` overloads now chain through a single implementation instead of duplicating the `Encoding.Default` default.
+- `MoveProcessedFileAsync` reduced from three `BlobClient` instances to two by reusing the read client for the delete call.
+
+---
+
+## [1.7.3] - prior release
+
+Initial packaged release. Included CSV read/write via CsvHelper, local file archiving, and Azure Blob Storage archiving.
