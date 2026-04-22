@@ -5,6 +5,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.0] - 2026-04-22
+
+### Breaking changes
+
+- **Target framework upgraded from `net8.0` to `net10.0`** — the library now requires .NET 10. Consumers still on .NET 8 or 9 should remain on 2.x.
+
+### Dependencies
+
+- `Microsoft.Extensions.DependencyInjection.Abstractions` updated from 9.0.7 → 10.0.0
+- `Microsoft.Extensions.Logging` updated from 9.0.7 → 10.0.0
+
+---
+
 ## [2.3.0] - 2026-04-22
 
 ### Added
