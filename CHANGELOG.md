@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.3.0] - 2026-04-22
+
+### Added
+
+- **`fixUnescapedQuotes` parameter on `GetDataFromFile`** — opt-in pre-processing pass that corrects bare double-quote characters inside quoted CSV fields before handing content to CsvHelper. When enabled, the raw content is read into memory, unescaped `"` characters are doubled to `""`, and parsing proceeds normally. Only enable this for files known to have the problem; the flag defaults to `false` so existing call sites are unaffected. Available on the `string filePath` and `Stream` `rowsToSkip` overloads.
+
+---
+
 ## [2.2.0] - 2026-04-22
 
 ### Added

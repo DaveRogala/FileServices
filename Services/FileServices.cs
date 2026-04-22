@@ -32,12 +32,12 @@ public class FileServices : IFileServices
         => GetDataFromFile<T>(filePath, Encoding.UTF8, rowsToSkip: 0, delimiter);
 
     /// <inheritdoc/>
-    public virtual ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",")
+    public virtual ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",", bool fixUnescapedQuotes = false)
     {
         try
         {
             using Stream stream = File.OpenRead(filePath);
-            return GetDataFromFile<T>(stream, encoding, rowsToSkip, delimiter);
+            return GetDataFromFile<T>(stream, encoding, rowsToSkip, delimiter, fixUnescapedQuotes);
         }
         catch (Exception ex)
         {
@@ -51,7 +51,7 @@ public class FileServices : IFileServices
         => GetDataFromFile<T>(stream, encoding, skipEncodingHeader ? 1 : 0, delimiter);
 
     /// <inheritdoc/>
-    public virtual ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",")
+    public virtual ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",", bool fixUnescapedQuotes = false)
     {
         ObjectResult<T> result = new();
         try
@@ -70,8 +70,17 @@ public class FileServices : IFileServices
             using StreamReader reader = new(stream, encoding, detectEncodingFromByteOrderMarks: true);
             for (int i = 0; i < rowsToSkip; i++)
                 reader.ReadLine();
-            using CsvReader csv = new(reader, config);
-            result.ObjectResults = csv.GetRecords<T>().ToList();
+            if (fixUnescapedQuotes)
+            {
+                using StringReader fixedReader = new(FixUnescapedQuotes(reader.ReadToEnd(), delimiter));
+                using CsvReader csv = new(fixedReader, config);
+                result.ObjectResults = csv.GetRecords<T>().ToList();
+            }
+            else
+            {
+                using CsvReader csv = new(reader, config);
+                result.ObjectResults = csv.GetRecords<T>().ToList();
+            }
             return result;
         }
         catch (CsvHelperException ex)
@@ -238,6 +247,86 @@ public class FileServices : IFileServices
             _logger.LogError(ex, ex.Message);
             throw;
         }
+    }
+
+    // Scans content character-by-character and doubles any " found inside a quoted field that is
+    // not already escaped (i.e. not followed by another ", a delimiter, a newline, or end-of-input).
+    // Correctly handles already-escaped "" sequences and leaves unquoted fields untouched.
+    private static string FixUnescapedQuotes(string content, string delimiter)
+    {
+        var sb = new StringBuilder(content.Length + 32);
+        bool inQuotedField = false;
+        bool atFieldStart = true;
+        char delimLast = delimiter[delimiter.Length - 1];
+        int i = 0;
+
+        while (i < content.Length)
+        {
+            char c = content[i];
+
+            if (inQuotedField)
+            {
+                if (c != '"')
+                {
+                    sb.Append(c);
+                    i++;
+                }
+                else
+                {
+                    int next = i + 1;
+                    bool atEnd = next >= content.Length;
+                    bool nextIsQuote = !atEnd && content[next] == '"';
+                    bool nextIsDelimOrNewline = !atEnd &&
+                        (content[next] == '\r' || content[next] == '\n' || IsDelimiterAt(content, next, delimiter));
+
+                    if (atEnd || nextIsDelimOrNewline)
+                    {
+                        // Closing quote
+                        sb.Append('"');
+                        inQuotedField = false;
+                        atFieldStart = false;
+                        i++;
+                    }
+                    else if (nextIsQuote)
+                    {
+                        // Already-escaped quote: output both and skip both
+                        sb.Append('"');
+                        sb.Append('"');
+                        i += 2;
+                    }
+                    else
+                    {
+                        // Unescaped interior quote: escape it
+                        sb.Append('"');
+                        sb.Append('"');
+                        i++;
+                    }
+                }
+            }
+            else
+            {
+                if (atFieldStart && c == '"')
+                {
+                    sb.Append('"');
+                    inQuotedField = true;
+                    atFieldStart = false;
+                }
+                else
+                {
+                    sb.Append(c);
+                    atFieldStart = c == '\n' || c == '\r' || c == delimLast;
+                }
+                i++;
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static bool IsDelimiterAt(string content, int index, string delimiter)
+    {
+        if (index + delimiter.Length > content.Length) return false;
+        return content.AsSpan(index, delimiter.Length).SequenceEqual(delimiter.AsSpan());
     }
 
     private async Task MoveProcessedFileAsync(BlobContainerClient containerClient, string filePath, string timeStamp, string targetFolder)

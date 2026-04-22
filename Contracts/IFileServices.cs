@@ -95,8 +95,14 @@ public interface IFileServices
     /// <param name="encoding">Encoding used to read the file. BOM detection is also enabled.</param>
     /// <param name="rowsToSkip">Number of leading rows to discard before parsing begins. Pass <c>0</c> to skip nothing.</param>
     /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <param name="fixUnescapedQuotes">
+    /// When <see langword="true"/>, pre-processes the content to escape any bare double-quote characters
+    /// found inside quoted fields (converts unescaped <c>"</c> to <c>""</c>).
+    /// Only enable this for files known to contain unescaped quotes; it reads the entire file into memory
+    /// before parsing. Defaults to <see langword="false"/>.
+    /// </param>
     /// <returns>An <see cref="ObjectResult{T}"/> containing parsed records and any row-level errors.</returns>
-    ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",");
+    ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, int rowsToSkip, string delimiter = ",", bool fixUnescapedQuotes = false);
 
     /// <summary>
     /// Reads a CSV file into a list of <typeparamref name="T"/> records using UTF-8 encoding and a comma delimiter.
@@ -138,8 +144,14 @@ public interface IFileServices
     /// <param name="encoding">Encoding used to decode the stream. BOM detection is also enabled.</param>
     /// <param name="rowsToSkip">Number of leading rows to discard before parsing begins. Pass <c>0</c> to skip nothing.</param>
     /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <param name="fixUnescapedQuotes">
+    /// When <see langword="true"/>, pre-processes the content to escape any bare double-quote characters
+    /// found inside quoted fields (converts unescaped <c>"</c> to <c>""</c>).
+    /// Only enable this for files known to contain unescaped quotes; it reads the entire stream into memory
+    /// before parsing. Defaults to <see langword="false"/>.
+    /// </param>
     /// <returns>An <see cref="ObjectResult{T}"/> containing parsed records and any row-level errors.</returns>
-    ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",");
+    ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, int rowsToSkip, string delimiter = ",", bool fixUnescapedQuotes = false);
 
     /// <summary>
     /// Reads a CSV stream into a list of <typeparamref name="T"/> records using UTF-8 encoding and a comma delimiter.

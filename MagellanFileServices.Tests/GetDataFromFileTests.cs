@@ -159,6 +159,58 @@ public class GetDataFromFileTests
     }
 
     [Fact]
+    public void GetDataFromFile_FixUnescapedQuotes_ParsesFieldWithBareQuote()
+    {
+        // Field contains an unescaped " that would normally break CsvHelper
+        using var stream = CsvStream("Id,Name,Amount\n1,\"Alice said \"hello\" to Bob\",10.5");
+
+        var result = _sut.GetDataFromFile<TestRecord>(stream, Encoding.UTF8, rowsToSkip: 0, fixUnescapedQuotes: true);
+
+        Assert.Empty(result.Errors);
+        Assert.False(result.CriticalError);
+        Assert.Single(result.ObjectResults!);
+        Assert.Equal("Alice said \"hello\" to Bob", result.ObjectResults![0].Name);
+    }
+
+    [Fact]
+    public void GetDataFromFile_FixUnescapedQuotes_PreservesAlreadyEscapedQuotes()
+    {
+        using var stream = CsvStream("Id,Name,Amount\n1,\"Alice said \"\"hello\"\" to Bob\",10.5");
+
+        var result = _sut.GetDataFromFile<TestRecord>(stream, Encoding.UTF8, rowsToSkip: 0, fixUnescapedQuotes: true);
+
+        Assert.Empty(result.Errors);
+        Assert.Single(result.ObjectResults!);
+        Assert.Equal("Alice said \"hello\" to Bob", result.ObjectResults![0].Name);
+    }
+
+    [Fact]
+    public void GetDataFromFile_FixUnescapedQuotes_MultipleRowsWithBareQuotes()
+    {
+        using var stream = CsvStream("Id,Name,Amount\n1,\"She said \"hi\"\",10.5\n2,\"He said \"bye\"\",20.0");
+
+        var result = _sut.GetDataFromFile<TestRecord>(stream, Encoding.UTF8, rowsToSkip: 0, fixUnescapedQuotes: true);
+
+        Assert.Empty(result.Errors);
+        Assert.Equal(2, result.ObjectResults?.Count);
+        Assert.Equal("She said \"hi\"", result.ObjectResults![0].Name);
+        Assert.Equal("He said \"bye\"", result.ObjectResults![1].Name);
+    }
+
+    [Fact]
+    public void GetDataFromFile_FixUnescapedQuotes_DefaultIsFalse()
+    {
+        // Without the fix flag the result should behave the same as passing false explicitly
+        using var streamA = CsvStream("Id,Name,Amount\n1,Alice,10.5");
+        using var streamB = CsvStream("Id,Name,Amount\n1,Alice,10.5");
+
+        var resultDefault = _sut.GetDataFromFile<TestRecord>(streamA, Encoding.UTF8, rowsToSkip: 0);
+        var resultExplicit = _sut.GetDataFromFile<TestRecord>(streamB, Encoding.UTF8, rowsToSkip: 0, fixUnescapedQuotes: false);
+
+        Assert.Equal(resultDefault.ObjectResults?.Count, resultExplicit.ObjectResults?.Count);
+    }
+
+    [Fact]
     public void GetDataFromFile_RowsToSkip_FileOverload_SkipsRows()
     {
         string tempFile = Path.GetTempFileName();

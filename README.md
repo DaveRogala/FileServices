@@ -80,6 +80,22 @@ ObjectResult<OrderRecord> result = fileServices.GetDataFromFile<OrderRecord>(
 
 The same parameter is available on the `Stream` overload. `skipEncodingHeader` is equivalent to `rowsToSkip: 1` and is kept for backwards compatibility.
 
+**Fixing unescaped quotes**
+
+Some source files wrap fields in double quotes but contain bare `"` characters inside those fields — a common vendor data-quality issue. Pass `fixUnescapedQuotes: true` to pre-process the content and escape them before parsing:
+
+```csharp
+// File contains:  1,"Alice said "hello" to Bob",10.5
+// Without the flag CsvHelper misreads the field; with it the record parses correctly.
+ObjectResult<OrderRecord> result = fileServices.GetDataFromFile<OrderRecord>(
+    @"C:\imports\orders.csv",
+    encoding: Encoding.UTF8,
+    rowsToSkip: 0,
+    fixUnescapedQuotes: true);
+```
+
+Only set this on files where the problem is known. The flag reads the entire file into memory before parsing and defaults to `false`, so existing call sites are unaffected.
+
 **From a stream**
 ```csharp
 using Stream stream = File.OpenRead(filePath);
