@@ -251,7 +251,9 @@ public class FileServices : IFileServices
 
     // Scans content character-by-character and doubles any " found inside a quoted field that is
     // not already escaped (i.e. not followed by another ", a delimiter, a newline, or end-of-input).
-    // Correctly handles already-escaped "" sequences and leaves unquoted fields untouched.
+    // Handles the ambiguous "" case by peeking one position further: if the char after the second "
+    // is a field boundary (delimiter / newline / end), the first " is an unescaped interior quote and
+    // the second " is the closing quote; otherwise both " form a genuine escape sequence.
     private static string FixUnescapedQuotes(string content, string delimiter)
     {
         var sb = new StringBuilder(content.Length + 32);
@@ -274,25 +276,48 @@ public class FileServices : IFileServices
                 else
                 {
                     int next = i + 1;
-                    bool atEnd = next >= content.Length;
-                    bool nextIsQuote = !atEnd && content[next] == '"';
-                    bool nextIsDelimOrNewline = !atEnd &&
-                        (content[next] == '\r' || content[next] == '\n' || IsDelimiterAt(content, next, delimiter));
 
-                    if (atEnd || nextIsDelimOrNewline)
+                    if (next >= content.Length)
                     {
-                        // Closing quote
+                        // End of content: closing quote
+                        sb.Append('"');
+                        inQuotedField = false;
+                        i++;
+                    }
+                    else if (content[next] == '"')
+                    {
+                        // Two consecutive quotes: peek past the second one to decide
+                        int afterNext = next + 1;
+                        bool secondIsFieldEnd = afterNext >= content.Length
+                            || content[afterNext] == '\r'
+                            || content[afterNext] == '\n'
+                            || IsDelimiterAt(content, afterNext, delimiter);
+
+                        if (secondIsFieldEnd)
+                        {
+                            // First " is an unescaped interior quote, second " is the closing quote.
+                            // Escape the interior (output "") then output the closing ".
+                            sb.Append('"');
+                            sb.Append('"');
+                            sb.Append('"');
+                            inQuotedField = false;
+                            i += 2;
+                        }
+                        else
+                        {
+                            // Genuine escape sequence: output both and stay in field
+                            sb.Append('"');
+                            sb.Append('"');
+                            i += 2;
+                        }
+                    }
+                    else if (content[next] == '\r' || content[next] == '\n' || IsDelimiterAt(content, next, delimiter))
+                    {
+                        // Closing quote before delimiter or newline
                         sb.Append('"');
                         inQuotedField = false;
                         atFieldStart = false;
                         i++;
-                    }
-                    else if (nextIsQuote)
-                    {
-                        // Already-escaped quote: output both and skip both
-                        sb.Append('"');
-                        sb.Append('"');
-                        i += 2;
                     }
                     else
                     {
