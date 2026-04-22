@@ -1,5 +1,12 @@
 namespace MagellanFileServices.Services;
 
+/// <summary>
+/// Default implementation of <see cref="IFileServices"/>.
+/// </summary>
+/// <remarks>
+/// All <c>Handle*</c> methods and the primary <see cref="GetDataFromFile{T}(string,Encoding,bool,string)"/>
+/// overload are <see langword="virtual"/> and can be overridden in a subclass to customise behaviour.
+/// </remarks>
 public class FileServices : IFileServices
 {
     private readonly ILogger<FileServices> _logger;
@@ -7,11 +14,16 @@ public class FileServices : IFileServices
     private const string ErrorFolder = "errors";
     private const string ProcessedFolder = "processed";
 
+    /// <summary>
+    /// Initialises a new instance with the supplied logger.
+    /// </summary>
+    /// <param name="logger">Logger used for error and diagnostic output.</param>
     public FileServices(ILogger<FileServices> logger)
     {
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public virtual ObjectResult<T> GetDataFromFile<T>(string filePath, Encoding encoding, bool skipEncodingHeader, string delimiter = ",")
     {
         try
@@ -26,11 +38,13 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public ObjectResult<T> GetDataFromFile<T>(string filePath, string delimiter = ",")
     {
         return GetDataFromFile<T>(filePath, Encoding.UTF8, skipEncodingHeader: false, delimiter);
     }
 
+    /// <inheritdoc/>
     public ObjectResult<T> GetDataFromFile<T>(Stream stream, Encoding encoding, bool skipEncodingHeader, string delimiter = ",")
     {
         ObjectResult<T> result = new();
@@ -70,11 +84,13 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public ObjectResult<T> GetDataFromFile<T>(Stream stream, string delimiter = ",")
     {
         return GetDataFromFile<T>(stream, Encoding.UTF8, skipEncodingHeader: false, delimiter);
     }
 
+    /// <inheritdoc/>
     public virtual void HandleFileError(string basePath, string fileName, string exceptionMessage, string timeStamp, List<string>? errors = null)
     {
         try
@@ -106,6 +122,7 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public virtual void HandleFileSuccess(string basePath, string fileName, string timeStamp)
     {
         try
@@ -130,6 +147,7 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public virtual async Task HandleFileErrorAsync(BlobContainerClient containerClient, string filePath, string exceptionMessage, string timeStamp, List<string>? errors = null)
     {
         try
@@ -159,6 +177,7 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public virtual async Task HandleFileSuccessAsync(BlobContainerClient containerClient, string filePath, string timeStamp)
     {
         try
@@ -175,21 +194,25 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
     public void WriteDataToFile<T>(string filePath, List<T> data)
     {
         WriteDataToFile<T>(filePath, data, ",", true, false);
     }
 
+    /// <inheritdoc/>
     public void WriteDataToFile<T>(string filePath, List<T> data, bool printEncoding)
     {
         WriteDataToFile<T>(filePath, data, ",", true, printEncoding);
     }
 
+    /// <inheritdoc/>
     public void WriteDataToFile<T>(string filePath, List<T> data, string delimiter = ",", bool useHeaders = true, bool printEncoding = false)
     {
         WriteDataToFile<T>(filePath, data, Encoding.UTF8, delimiter, useHeaders, printEncoding);
     }
 
+    /// <inheritdoc/>
     public void WriteDataToFile<T>(string filePath, List<T> data, Encoding encoding, string delimiter = ",", bool useHeaders = true, bool printEncoding = false)
     {
         try
