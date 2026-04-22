@@ -2,6 +2,8 @@ global using Xunit;
 global using Moq;
 global using System.Text;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.DependencyInjection;
+global using MagellanFileServices;
 global using MagellanFileServices.Services;
 global using MagellanFileServices.Models;
 global using Azure;
