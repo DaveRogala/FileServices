@@ -230,8 +230,9 @@ public class GetDataFromFileTests
     [Fact]
     public void GetDataFromFile_FileNotFound_Throws()
     {
+        string missingFile = Path.Combine(Path.GetTempPath(), "nonexistent_file_magellan.csv");
         Assert.Throws<FileNotFoundException>(() =>
-            _sut.GetDataFromFile<TestRecord>("/nonexistent/path/file.csv"));
+            _sut.GetDataFromFile<TestRecord>(missingFile));
     }
 
     [Fact]

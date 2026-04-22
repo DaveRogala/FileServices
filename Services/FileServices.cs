@@ -369,12 +369,12 @@ public class FileServices : IFileServices
                 : $"{dir}/{targetFolder}/{TargetFileName(Path.GetFileName(filePath), timeStamp)}";
 
             BlobClient readClient = containerClient.GetBlobClient(filePath);
-            BlobDownloadInfo blobDownloadInfo = await readClient.DownloadAsync();
+            BlobDownloadInfo blobDownloadInfo = await readClient.DownloadAsync(CancellationToken.None);
 
             BlobClient blobClient = containerClient.GetBlobClient(archiveFilePath);
-            await blobClient.UploadAsync(blobDownloadInfo.Content, overwrite: true);
+            await blobClient.UploadAsync(blobDownloadInfo.Content, true, CancellationToken.None);
 
-            await readClient.DeleteIfExistsAsync();
+            await readClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, CancellationToken.None);
         }
         catch (Exception ex)
         {
