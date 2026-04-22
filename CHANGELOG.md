@@ -5,6 +5,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.1.0] - 2026-04-22
+
+### Added
+
+- **`ServiceCollectionExtensions.AddMagellanFileServices()`** — extension method on `IServiceCollection` that registers `FileServices` as `IFileServices` with a scoped lifetime. Callers no longer need to wire up the registration manually. The method returns `IServiceCollection` for fluent chaining.
+- **`MagellanFileServices.sln`** — solution file wrapping both the library and test projects so the whole repository builds and tests from a single entry point.
+- **`MagellanFileServices.Tests`** — xUnit 2.9 / Moq 4.20 test project covering CSV reading, CSV writing, local file archiving, Azure Blob archiving, and DI registration (47 tests).
+
+### Dependencies
+
+- Added `Microsoft.Extensions.DependencyInjection.Abstractions 9.0.7` to the library (provides `IServiceCollection` and `ServiceDescriptor` for the registration extension without pulling in the full DI container).
+
+---
+
 ## [2.0.0] - 2026-04-22
 
 ### Breaking changes

@@ -16,11 +16,19 @@ dotnet add package MagellanFileServices
 
 ## Registration
 
-Register `FileServices` with the standard `ILogger<T>` dependency:
+Call the provided extension method in your startup code:
 
 ```csharp
 builder.Services.AddLogging();
-builder.Services.AddScoped<IFileServices, FileServices>();
+builder.Services.AddMagellanFileServices();
+```
+
+This registers `FileServices` as `IFileServices` with a **scoped** lifetime. The `using MagellanFileServices;` namespace must be in scope.
+
+If you need a different lifetime, register manually:
+
+```csharp
+builder.Services.AddSingleton<IFileServices, FileServices>();
 ```
 
 ---
