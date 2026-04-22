@@ -62,6 +62,24 @@ ObjectResult<OrderRecord> result = fileServices.GetDataFromFile<OrderRecord>(
 
 **`skipEncodingHeader`** — pass `true` when the first line of the file contains an encoding declaration rather than data (the line is discarded before CSV parsing begins).
 
+**Skipping metadata rows**
+
+Some files carry one or more metadata rows before the column header. Pass `rowsToSkip` to discard them:
+
+```csharp
+// File layout:
+//   Report: Monthly Orders        <- metadata row 1
+//   Source: ERP System            <- metadata row 2
+//   Id,CustomerName,Amount        <- column header (not counted in rowsToSkip)
+//   1,Alice,99.99
+ObjectResult<OrderRecord> result = fileServices.GetDataFromFile<OrderRecord>(
+    @"C:\imports\orders.csv",
+    encoding: Encoding.UTF8,
+    rowsToSkip: 2);
+```
+
+The same parameter is available on the `Stream` overload. `skipEncodingHeader` is equivalent to `rowsToSkip: 1` and is kept for backwards compatibility.
+
 **From a stream**
 ```csharp
 using Stream stream = File.OpenRead(filePath);
@@ -155,7 +173,7 @@ await fileServices.HandleFileErrorAsync(
 
 ## Extending
 
-All `Handle*` and the primary `GetDataFromFile<T>` overload are `virtual`, allowing behaviour to be customised by subclassing `FileServices`.
+All `Handle*` methods and the `GetDataFromFile<T>(..., int rowsToSkip, ...)` overloads are `virtual`, allowing behaviour to be customised by subclassing `FileServices`.
 
 ---
 
