@@ -1,0 +1,9 @@
+global using Xunit;
+global using Moq;
+global using System.Text;
+global using Microsoft.Extensions.Logging;
+global using MagellanFileServices.Services;
+global using MagellanFileServices.Models;
+global using Azure;
+global using Azure.Storage.Blobs;
+global using Azure.Storage.Blobs.Models;
