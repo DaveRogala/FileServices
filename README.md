@@ -1,10 +1,10 @@
 # MagellanFileServices
 
-A .NET 8 class library providing common ETL file-import utilities: reading CSV files into typed record lists, writing CSV output, and moving processed or failed files to timestamped archive folders — for both local file systems and Azure Blob Storage.
+A .NET 10 class library providing common ETL file-import utilities: reading CSV files into typed record lists, writing CSV output, and moving processed or failed files to timestamped archive folders — for both local file systems and Azure Blob Storage.
 
 ## Requirements
 
-- .NET 8.0
+- .NET 10.0
 - `Microsoft.Extensions.Logging` (provided by the host application's DI container)
 - `Azure.Storage.Blobs` — only required if using the Azure Blob methods
 
