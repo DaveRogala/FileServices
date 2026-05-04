@@ -136,6 +136,30 @@ fileServices.WriteDataToFile(
 
 ---
 
+## Writing CSV to Azure Blob Storage
+
+`WriteDataToBlobAsync` serialises the list directly to a `MemoryStream` and uploads it — no temporary file is created. The blob is overwritten if it already exists.
+
+**Simple write**
+```csharp
+BlobContainerClient container = new BlobContainerClient(connectionString, containerName);
+await fileServices.WriteDataToBlobAsync(container, "output/orders.csv", records);
+```
+
+**With options**
+```csharp
+await fileServices.WriteDataToBlobAsync(
+    container,
+    "output/orders.tsv",
+    records,
+    encoding: Encoding.UTF8,
+    delimiter: "\t",
+    useHeaders: true,
+    printEncoding: false);
+```
+
+---
+
 ## Local file archiving
 
 Both methods create the destination subfolder if it does not exist and rename the file with the supplied timestamp.
@@ -189,7 +213,7 @@ await fileServices.HandleFileErrorAsync(
 
 ## Extending
 
-All `Handle*` methods and the `GetDataFromFile<T>(..., int rowsToSkip, ...)` overloads are `virtual`, allowing behaviour to be customised by subclassing `FileServices`.
+All `Handle*` methods, the `GetDataFromFile<T>(..., int rowsToSkip, ...)` overloads, and `WriteDataToBlobAsync<T>(..., Encoding, ...)` are `virtual`, allowing behaviour to be customised by subclassing `FileServices`.
 
 ---
 
