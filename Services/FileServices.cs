@@ -249,6 +249,51 @@ public class FileServices : IFileServices
         }
     }
 
+    /// <inheritdoc/>
+    public Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data)
+        => WriteDataToBlobAsync<T>(containerClient, blobPath, data, Encoding.UTF8, ",", true, false);
+
+    /// <inheritdoc/>
+    public Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, bool printEncoding)
+        => WriteDataToBlobAsync<T>(containerClient, blobPath, data, Encoding.UTF8, ",", true, printEncoding);
+
+    /// <inheritdoc/>
+    public Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, string delimiter = ",", bool useHeaders = true, bool printEncoding = false)
+        => WriteDataToBlobAsync<T>(containerClient, blobPath, data, Encoding.UTF8, delimiter, useHeaders, printEncoding);
+
+    /// <inheritdoc/>
+    public virtual async Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, Encoding encoding, string delimiter = ",", bool useHeaders = true, bool printEncoding = false)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(containerClient);
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(blobPath);
+
+            using MemoryStream ms = new();
+            CsvConfiguration config = new(CultureInfo.InvariantCulture)
+            {
+                Delimiter = delimiter,
+                HasHeaderRecord = useHeaders,
+                Encoding = encoding
+            };
+            using (StreamWriter writer = new(ms, encoding, bufferSize: -1, leaveOpen: true))
+            {
+                if (printEncoding)
+                    writer.WriteLine(encoding.HeaderName);
+                using CsvWriter csv = new(writer, config);
+                csv.WriteRecords<T>(data);
+            }
+            ms.Position = 0;
+            BlobClient blobClient = containerClient.GetBlobClient(blobPath);
+            await blobClient.UploadAsync(ms, overwrite: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw;
+        }
+    }
+
     // Scans content character-by-character and doubles any " found inside a quoted field that is
     // not already escaped (i.e. not followed by another ", a delimiter, a newline, or end-of-input).
     // Handles the ambiguous "" case by peeking one position further: if the char after the second "

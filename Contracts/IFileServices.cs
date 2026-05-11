@@ -206,4 +206,57 @@ public interface IFileServices
     /// <param name="useHeaders">When <see langword="false"/>, the header row is omitted.</param>
     /// <param name="printEncoding">When <see langword="true"/>, writes <c>encoding.HeaderName</c> as the first line.</param>
     void WriteDataToFile<T>(string filePath, List<T> data, Encoding encoding, string delimiter = ",", bool useHeaders = true, bool printEncoding = false);
+
+    /// <summary>
+    /// Writes <paramref name="data"/> as a CSV blob using UTF-8 encoding, a comma delimiter, and a header row.
+    /// </summary>
+    /// <typeparam name="T">Record type. Public properties are written as columns.</typeparam>
+    /// <param name="containerClient">Client scoped to the container that will hold the blob.</param>
+    /// <param name="blobPath">Path of the blob within the container, e.g. <c>output/orders.csv</c>. Overwritten if it already exists.</param>
+    /// <param name="data">Records to write.</param>
+    Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data);
+
+    /// <summary>
+    /// Writes <paramref name="data"/> as a CSV blob, optionally prefixing the output with the encoding name.
+    /// </summary>
+    /// <typeparam name="T">Record type. Public properties are written as columns.</typeparam>
+    /// <param name="containerClient">Client scoped to the container that will hold the blob.</param>
+    /// <param name="blobPath">Path of the blob within the container. Overwritten if it already exists.</param>
+    /// <param name="data">Records to write.</param>
+    /// <param name="printEncoding">
+    /// When <see langword="true"/>, writes <c>encoding.HeaderName</c> as the first line so that
+    /// consumers can detect the encoding using <c>skipEncodingHeader</c> when reading back.
+    /// </param>
+    Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, bool printEncoding);
+
+    /// <summary>
+    /// Writes <paramref name="data"/> as a CSV blob with a configurable delimiter, header row, and encoding prefix.
+    /// Uses UTF-8 encoding.
+    /// </summary>
+    /// <typeparam name="T">Record type. Public properties are written as columns.</typeparam>
+    /// <param name="containerClient">Client scoped to the container that will hold the blob.</param>
+    /// <param name="blobPath">Path of the blob within the container. Overwritten if it already exists.</param>
+    /// <param name="data">Records to write.</param>
+    /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <param name="useHeaders">When <see langword="false"/>, the header row is omitted.</param>
+    /// <param name="printEncoding">When <see langword="true"/>, writes the encoding name as the first line.</param>
+    Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, string delimiter = ",", bool useHeaders = true, bool printEncoding = false);
+
+    /// <summary>
+    /// Writes <paramref name="data"/> as a CSV blob with full control over encoding, delimiter, header row, and encoding prefix.
+    /// </summary>
+    /// <remarks>
+    /// The data is serialised into a <see cref="MemoryStream"/> before upload so no temporary file is created.
+    /// The blob is overwritten if it already exists.
+    /// </remarks>
+    /// <typeparam name="T">Record type. Public properties are written as columns.</typeparam>
+    /// <param name="containerClient">Client scoped to the container that will hold the blob.</param>
+    /// <param name="blobPath">Path of the blob within the container. Overwritten if it already exists.</param>
+    /// <param name="data">Records to write.</param>
+    /// <param name="encoding">Encoding for the CSV content.</param>
+    /// <param name="delimiter">Column delimiter. Defaults to <c>,</c>.</param>
+    /// <param name="useHeaders">When <see langword="false"/>, the header row is omitted.</param>
+    /// <param name="printEncoding">When <see langword="true"/>, writes <c>encoding.HeaderName</c> as the first line.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="containerClient"/> is <see langword="null"/> or <paramref name="blobPath"/> is <see langword="null"/> or whitespace.</exception>
+    Task WriteDataToBlobAsync<T>(BlobContainerClient containerClient, string blobPath, List<T> data, Encoding encoding, string delimiter = ",", bool useHeaders = true, bool printEncoding = false);
 }

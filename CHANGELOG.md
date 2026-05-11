@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.1.0] - 2026-04-22
+
+### Added
+
+- **`WriteDataToBlobAsync`** — four overloads mirroring `WriteDataToFile` but writing directly to Azure Blob Storage. Data is serialised to CSV in a `MemoryStream` (no temp file) and uploaded with `overwrite: true`. The full overload accepts `BlobContainerClient`, `blobPath`, `List<T>`, `Encoding`, `delimiter`, `useHeaders`, and `printEncoding`; convenience overloads default to UTF-8 / comma / headers.
+
+---
+
 ## [3.0.0] - 2026-04-22
 
 ### Breaking changes
